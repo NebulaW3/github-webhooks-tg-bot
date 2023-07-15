@@ -2,6 +2,7 @@ use actix_web::{post, web, App, HttpResponse, HttpServer, Responder};
 
 #[post("/process-webhook")]
 async fn process_webhook(payload: String) -> impl Responder {
+    println!("{}", payload);
     payload
 }
 
