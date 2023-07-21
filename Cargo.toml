@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 actix-web = "4"
+openssl = { version = "0.10", features = ["vendored"] }
 tokio = { version =  "1.29.1", features = ["full"] }
 teloxide = { version = "0.12", features = ["macros"] }
 log = "0.4"
