@@ -8,7 +8,10 @@ struct AppState {
 #[post("/process-webhook")]
 async fn process_webhook(payload: String, data: web::Data<AppState>) -> impl Responder {
     println!("{}", payload);
-    data.bot.send_message(ChatId(502462376), payload.clone());
+    data.bot
+        .send_message(ChatId(502462376), payload.clone())
+        .await
+        .unwrap();
     payload
 }
 
@@ -21,7 +24,7 @@ async fn main() -> std::io::Result<()> {
             }))
             .service(process_webhook)
     })
-    .bind(("127.0.0.1", 8080))?
+    .bind(("0.0.0.0", 80))?
     .run()
     .await
 }
