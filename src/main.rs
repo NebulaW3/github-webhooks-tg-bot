@@ -1,13 +1,20 @@
 use actix_web::{post, web, App, HttpServer, Responder};
-use serde_json::{Value};
+use serde_json::Value;
 use teloxide::{
     payloads,
     prelude::*,
     types::{ParseMode, Recipient},
 };
 
+const CHAT_ID: i64 = -1001986164831;
+const THREAD_ID: i32 = 13915;
+
 struct AppState {
     bot: Bot,
+}
+
+async fn bot_send_message(bot: &Bot, text: String) -> <Bot as Requester>::SendMessage {
+    bot.send_message_to_thread(ChatId(CHAT_ID), THREAD_ID, text)
 }
 
 #[post("/issues")]
@@ -18,10 +25,23 @@ async fn process_webhook(payload: String, data: web::Data<AppState>) -> impl Res
         webhook_data["action"].as_str().unwrap_or(""),
         webhook_data["issue"]["html_url"].as_str().unwrap_or("")
     );
-    data.bot
-        .send_message_to_thread(ChatId(-1001986164831), 13915, text)
-        .await;
-    payload
+    bot_send_message(&data.bot, text).await;
+    ""
+}
+
+#[post("/pr-review-comment")]
+async fn process_pr_review_commenty(payload: String, data: web::Data<AppState>) -> impl Responder {
+    let webhook_data: Value = serde_json::from_str(&payload.as_str()).unwrap();
+    let text = format!(
+        "New review comment for PR: {}\n\n<i>{}</i>\n\nBy {}\n\n{}",
+        webhook_data["pull_request"]["html_url"],
+        webhook_data["comment"]["body"],
+        webhook_data["comment"]["user"]["name"],
+        webhook_data["comment"]["html_url"],
+    );
+
+    bot_send_message(&data.bot, text).await;
+    ""
 }
 
 #[actix_web::main]
@@ -33,7 +53,7 @@ async fn main() -> std::io::Result<()> {
             }))
             .service(process_webhook)
     })
-    .bind(("0.0.0.0", 80))?
+    .bind(("0.0.0.0", 8080))?
     .run()
     .await
 }
