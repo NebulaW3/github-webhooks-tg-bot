@@ -18,7 +18,7 @@ async fn bot_send_message(bot: &Bot, text: String) -> <Bot as Requester>::SendMe
 }
 
 #[post("/issues")]
-async fn process_webhook(payload: String, data: web::Data<AppState>) -> impl Responder {
+async fn process_issue(payload: String, data: web::Data<AppState>) -> impl Responder {
     let webhook_data: Value = serde_json::from_str(&payload.as_str()).unwrap();
     let text = format!(
         "Issue is <b>{}</b>, for more details see {}",
@@ -30,7 +30,7 @@ async fn process_webhook(payload: String, data: web::Data<AppState>) -> impl Res
 }
 
 #[post("/pr-review-comment")]
-async fn process_pr_review_commenty(payload: String, data: web::Data<AppState>) -> impl Responder {
+async fn process_pr_review_comment(payload: String, data: web::Data<AppState>) -> impl Responder {
     let webhook_data: Value = serde_json::from_str(&payload.as_str()).unwrap();
     let text = format!(
         "New review comment for PR: {}\n\n<i>{}</i>\n\nBy {}\n\n{}",
@@ -51,7 +51,8 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(AppState {
                 bot: Bot::from_env(),
             }))
-            .service(process_webhook)
+            .service(process_issue)
+            .service(process_pr_review_comment)
     })
     .bind(("0.0.0.0", 8080))?
     .run()
