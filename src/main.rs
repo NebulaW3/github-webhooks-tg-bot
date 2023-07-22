@@ -1,5 +1,5 @@
 use actix_web::{post, web, App, HttpServer, Responder};
-use serde_json::{Result, Value};
+use serde_json::{Value};
 use teloxide::{
     payloads,
     prelude::*,
