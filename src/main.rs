@@ -1,5 +1,5 @@
-use actix_web::{post, web, App, HttpResponse, HttpServer, Responder};
-use teloxide::{payloads, prelude::*, types::Recipient, utils::command::BotCommands};
+use actix_web::{post, web, App, HttpServer, Responder};
+use teloxide::{payloads, prelude::*, types::Recipient};
 
 struct AppState {
     bot: Bot,
@@ -8,7 +8,7 @@ struct AppState {
 #[post("/process-webhook")]
 async fn process_webhook(payload: String, data: web::Data<AppState>) -> impl Responder {
     println!("{}", payload);
-    let res = data
+    let _res = data
         .bot
         .send_message_to_thread(ChatId(-1001986164831), 13915, &payload[..1000])
         .await;
