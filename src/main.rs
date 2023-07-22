@@ -1,5 +1,5 @@
 use actix_web::{post, web, App, HttpResponse, HttpServer, Responder};
-use teloxide::prelude::*;
+use teloxide::{payloads, prelude::*, types::Recipient, utils::command::BotCommands};
 
 struct AppState {
     bot: Bot,
@@ -10,9 +10,8 @@ async fn process_webhook(payload: String, data: web::Data<AppState>) -> impl Res
     println!("{}", payload);
     let res = data
         .bot
-        .send_message(ChatId(502462376), &payload[..1000])
+        .send_message_to_thread(ChatId(-1001986164831), 13915, &payload[..1000])
         .await;
-    dbg!("{}", res);
     payload
 }
 
@@ -28,4 +27,29 @@ async fn main() -> std::io::Result<()> {
     .bind(("0.0.0.0", 80))?
     .run()
     .await
+}
+
+trait SendToThread: Requester {
+    fn send_message_to_thread<C, T>(
+        &self,
+        chat_id: C,
+        thread_id: i32,
+        text: T,
+    ) -> Self::SendMessage
+    where
+        C: Into<Recipient>,
+        T: Into<String>;
+}
+
+impl SendToThread for Bot {
+    fn send_message_to_thread<C, T>(&self, chat_id: C, thread_id: i32, text: T) -> Self::SendMessage
+    where
+        C: Into<Recipient>,
+        T: Into<String>,
+    {
+        Self::SendMessage::new(
+            self.clone(),
+            payloads::SendMessage::new(chat_id, text).message_thread_id(thread_id),
+        )
+    }
 }
