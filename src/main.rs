@@ -1,5 +1,7 @@
 use actix_web::{post, web, App, HttpServer, Responder};
-use serde_json::Value;
+use github_webhooks_tg_bot::{
+    get_issue_text, get_pr_review_comment_text, get_pr_review_text, get_pr_text,
+};
 use teloxide::{
     payloads,
     prelude::*,
@@ -19,79 +21,28 @@ fn bot_send_message(bot: &Bot, text: String) -> <Bot as Requester>::SendMessage 
 
 #[post("/issues")]
 async fn process_issue(payload: String, data: web::Data<AppState>) -> impl Responder {
-    let webhook_data: Value = serde_json::from_str(&payload.as_str()).unwrap();
-    let text = format!(
-        "Issue is <b>{}</b>, for more details see {}",
-        webhook_data["action"].as_str().unwrap_or(""),
-        webhook_data["issue"]["html_url"].as_str().unwrap_or("")
-    );
-
+    let text = get_issue_text(payload);
     bot_send_message(&data.bot, text).await;
     ""
 }
 
 #[post("/pr")]
 async fn process_pr(payload: String, data: web::Data<AppState>) -> impl Responder {
-    let webhook_data: Value = serde_json::from_str(&payload.as_str()).unwrap();
-    let text =
-        format!(
-        "<a href='{}'>Pull request</a> for <a href='{}'>{}</a> was <b>{}</b> by <a href='{}'>{}</a>.",
-        webhook_data["pull_request"]["html_url"].as_str().unwrap_or(""),
-        webhook_data["repository"]["html_url"]
-            .as_str()
-            .unwrap_or(""),
-        webhook_data["repository"]["full_name"]
-            .as_str()
-            .unwrap_or(""),
-        webhook_data["pull_request"]["user"]["html_url"].as_str().unwrap_or(""),
-        webhook_data["pull_request"]["user"]["login"]
-            .as_str()
-            .unwrap_or(""),
-        webhook_data["action"].as_str().unwrap_or(""),
-    );
-
+    let text = get_pr_text(payload);
     bot_send_message(&data.bot, text).await;
     ""
 }
 
 #[post("/pr-review")]
 async fn process_pr_review(payload: String, data: web::Data<AppState>) -> impl Responder {
-    let webhook_data: Value = serde_json::from_str(&payload.as_str()).unwrap();
-    let text = format!(
-        "<a href='{}'>Review </a> for <a href='{}'>PR</a> was <b>{}</b> by <a href='{}'>{}</a>.\n\n<i>{}</i>",
-        webhook_data["review"]["html_url"].as_str().unwrap_or(""),
-        webhook_data["pull_request"]["html_url"]
-            .as_str()
-            .unwrap_or(""),
-        webhook_data["action"].as_str().unwrap_or(""),
-        webhook_data["review"]["user"]["html_url"].as_str().unwrap_or(""),
-        webhook_data["review"]["user"]["login"]
-            .as_str()
-            .unwrap_or(""),
-        webhook_data["review"]["body"].as_str().unwrap_or(""),
-    );
-
+    let text = get_pr_review_text(payload);
     bot_send_message(&data.bot, text).await;
     ""
 }
 
 #[post("/pr-review-comment")]
 async fn process_pr_review_comment(payload: String, data: web::Data<AppState>) -> impl Responder {
-    let webhook_data: Value = serde_json::from_str(payload.as_str()).unwrap();
-    let text = format!(
-        "<a href='{}'>Review comment</a> for <a href='{}'>PR</a> was <b>{}</b> by <a href='{}'>{}</a>.\n\n<i>{}</i>",
-        webhook_data["comment"]["html_url"].as_str().unwrap_or(""),
-        webhook_data["pull_request"]["html_url"]
-            .as_str()
-            .unwrap_or(""),
-        webhook_data["action"].as_str().unwrap_or(""),
-        webhook_data["comment"]["user"]["html_url"].as_str().unwrap_or(""),
-        webhook_data["comment"]["user"]["login"]
-            .as_str()
-            .unwrap_or(""),
-        webhook_data["comment"]["body"].as_str().unwrap_or(""),
-    );
-
+    let text = get_pr_review_comment_text(payload);
     bot_send_message(&data.bot, text).await;
     ""
 }
